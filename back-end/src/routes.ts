@@ -94,9 +94,15 @@ export const Routes = [
     action: "createGroup",
   },
   {
-    method: "put",
-    route: "/group/run-group-filters",
+    method: "get",
+    route: "/group/:id/student/get-all",
     controller: GroupController,
-    action: "runGroupFilters",
+    action: "getGroupStudents",
+  },
+  {
+      method: "post",
+      route: "/group/run-group-filters",
+      controller: GroupController,
+      action: "runGroupFilters",
   },
 ]
