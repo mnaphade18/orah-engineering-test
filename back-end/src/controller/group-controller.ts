@@ -89,9 +89,40 @@ export class GroupController {
     // Task 2:
   
     // 1. Clear out the groups (delete all the students from the groups)
+    this.groupStudentRepository.clear()
 
     // 2. For each group, query the student rolls to see which students match the filter for the group
+    const groups = await this.groupRepository.find()
+    const studentGroups = await Promise.all(groups.map(g => this.formStudentGroups(g)))
 
     // 3. Add the list of students that match the filter to the group
+    this.groupRepository.save(studentGroups)
+  }
+
+  async formStudentGroups(group: Group) {
+      const weekOffset = new Date(Date.now() - ONE_WEEK * group.number_of_weeks)
+
+      const students = await this.studentRollRepository
+          .createQueryBuilder('student_roll')
+          .innerJoin(Roll, "roll", "roll.id = student_roll.roll_id")
+          .addSelect('student_roll.student_id as student_id')
+          .addSelect(`${group.id} as group_id`)
+          .addSelect('COUNT(student_roll.id) as incident_count')
+          .where("student_roll.state in (:...state)", { state: group.roll_states.split(',') })
+          .andWhere("roll.completed_at > :week", { week: weekOffset })
+          .groupBy('student_roll.student_id')
+          .having(`count(student_roll.id) ${group.ltmt} :incidents`, { incidents: group.incidents })
+          .getRawMany()
+
+      group.students = students.map(s => {
+              const input = new GroupStudent()
+              input.prepareToCreate(s)
+
+              return input
+          })
+      group.student_count = students.length
+      group.run_at = new Date()
+
+      return group
   }
 }

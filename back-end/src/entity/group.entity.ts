@@ -1,5 +1,6 @@
-import { Entity, PrimaryGeneratedColumn, Column } from "typeorm"
+import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from "typeorm"
 import { CreateGroupInput, UpdateGroupInput } from "../interface/group.interface"
+import { GroupStudent } from "./group-student.entity"
 
 @Entity()
 export class Group {
@@ -28,6 +29,9 @@ export class Group {
 
   @Column()
   student_count: number
+
+  @OneToMany(() => GroupStudent, (gs) => gs.group, { cascade: true })
+  students: GroupStudent[]
 
   public prepareToCreate(input: CreateGroupInput) {
     this.name = input.name
